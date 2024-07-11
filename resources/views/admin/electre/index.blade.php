@@ -137,7 +137,7 @@
                                                     $criteria = $criterias->where('id', $patient->criteria_id)->first();
                                                     $value = $patient->value / sqrt($totalTiapKolomVertical[$patient->criteria_id]);
                                                     ?>
-                                                    <td>{{ number_format($value, 3) }}</td>
+                                                    <td>{{ number_format($value, 6) }}</td>
                                                 @endforeach
                                             </tr>
                                         @endforeach
@@ -186,6 +186,7 @@
                                                 @foreach ($groupedPatients as $patient)
                                                     <?php
                                                     $criteria = $criterias->where('id', $patient->criteria_id)->first();
+                                                    // dd($criteria);
                                                     $value = $patient->value / sqrt($totalTiapKolomVertical[$patient->criteria_id]);
                                                     $weight = $criteria->weight * $value;
                                                     $matrixWeighted[$patient->patient_id][$criteria->id] = [
@@ -193,7 +194,7 @@
                                                         'weight' => $weight,
                                                     ];
                                                     ?>
-                                                    <td>{{ number_format($weight, 3) }}</td>
+                                                    <td>{{ number_format($weight, 6) }}</td>
                                                 @endforeach
                                             </tr>
                                         @endforeach
@@ -223,7 +224,7 @@
                                             </thead>
                                             <tbody>
                                                 @foreach ($matrixWeighted as $i => $matrixWeightedI)
-                                                    @foreach ($matrixWeightedI as $j => $matrixWeightedJ)
+                                                    @foreach ($matrixWeighted as $j => $matrixWeightedJ)
                                                         @if ($i != $j)
                                                             <tr>
                                                                 <td>A{{ $i }} >= A{{ $j }}</td>
@@ -312,7 +313,7 @@
                                             </thead>
                                             <tbody>
                                                 @foreach ($matrixWeighted as $i => $matrixWeightedI)
-                                                    @foreach ($matrixWeightedI as $j => $matrixWeightedJ)
+                                                    @foreach ($matrixWeighted as $j => $matrixWeightedJ)
                                                         @if ($i != $j)
                                                             <tr>
                                                                 <td>A{{ $i }} < A{{ $j }}</td>
