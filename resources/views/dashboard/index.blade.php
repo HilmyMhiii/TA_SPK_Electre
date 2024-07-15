@@ -7,7 +7,7 @@
         <div class="section-body">
             <div class="row">
                 <div class="col-lg-12 mb-4 shadow p-3">
-                    <img src="{{ asset('assets/images/slide_polinema.jpeg') }}" alt="carousel" class="img-fluid">
+                    <img src="{{ asset('assets/images/rsnu.jpg') }}" alt="carousel" class="img-fluid" style="width: 1250px; height: 500px">
                 </div>
             </div>
             @if (auth()->user()->role == 'admin')

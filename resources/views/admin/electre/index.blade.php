@@ -39,7 +39,7 @@
                         </div>
                     </div>
 
-
+                    {{-- Data penentuan Sampel--}}
                     {{-- Matrik Keputusan --}}
                     <div class="card mb-4">
                         <div class="card-header">
@@ -455,6 +455,7 @@
                     </div>
 
 
+                    {{-- @dd($matrixWeighted) --}}
                     {{-- Matrik Discordance --}}
                     <div class="card mb-4">
                         <div class="card-header">
@@ -487,6 +488,8 @@
                                                     @if ($i != $j)
                                                         @php
                                                             $idCriterias = [];
+                                                            $persatas = [];
+                                                            $persbawah = [];
                                                         @endphp
                                                         @foreach ($matrixWeightedI as $k => $matrixWeightedK)
                                                             @if ($matrixWeightedK['weight'] < $matrixWeightedJ[$k]['weight'])
@@ -494,23 +497,35 @@
                                                                     $idCriterias[] = $k;
                                                                 @endphp
                                                             @endif
-                                                        @endforeach
-                                                        @if ($idCriterias)
                                                             @php
-                                                                $value = 0;
+                                                                $persbawah[$k] = isset($persbawah[$k])
+                                                                    ? $persbawah[$k]
+                                                                    : 0;
+                                                                $persbawah[$k] += abs(
+                                                                    $matrixWeightedK['weight'] -
+                                                                        $matrixWeightedJ[$k]['weight'],
+                                                                );
                                                             @endphp
-                                                            @foreach ($idCriterias as $idCriteria)
-                                                                @php
-                                                                    $criteria = $criterias
-                                                                        ->where('id', $idCriteria)
-                                                                        ->first();
-                                                                    $value += $criteria->weight;
-                                                                @endphp
-                                                            @endforeach
-                                                            <td>{{ $value }}</td>
-                                                        @else
-                                                            <td>0</td>
-                                                        @endif
+                                                        @endforeach
+                                                        @foreach ($idCriterias as $pi => $criteria)
+                                                            @php
+                                                                $persatas[$pi] = isset($persatas[$pi])
+                                                                    ? $persatas[$pi]
+                                                                    : 0;
+                                                                $persatas[$pi] += abs(
+                                                                    $matrixWeighted[$i][$criteria]['weight'] -
+                                                                        $matrixWeighted[$j][$criteria]['weight'],
+                                                                );
+                                                            @endphp
+                                                        @endforeach
+                                                        @php
+                                                            $maxAtas = !empty($persatas) ? max($persatas) : 0;
+                                                            $maxBawah = !empty($persbawah) ? max($persbawah) : 0;
+                                                            $bagi = round($maxAtas / $maxBawah, 4);
+                                                        @endphp
+                                                        <td>
+                                                            {{ $bagi }}
+                                                        </td>
                                                     @else
                                                         <td>-</td>
                                                     @endif
@@ -548,6 +563,35 @@
                                         </tr>
                                     </thead>
                                     <tbody>
+                                        @php
+                                            $jumlahAlternatif = count($matrixWeighted);
+                                            $m = $jumlahAlternatif * ($jumlahAlternatif - 1);
+                                            $totalValue = 0;
+                                            foreach ($matrixWeighted as $i => $matrixWeightedI) {
+                                                foreach ($matrixWeighted as $j => $matrixWeightedJ) {
+                                                    if ($i != $j) {
+                                                        $idCriterias = [];
+                                                        foreach ($matrixWeightedI as $k => $matrixWeightedK) {
+                                                            if (
+                                                                $matrixWeightedK['weight'] >=
+                                                                $matrixWeightedJ[$k]['weight']
+                                                            ) {
+                                                                $idCriterias[] = $k;
+                                                            }
+                                                        }
+                                                        if (!empty($idCriterias)) {
+                                                            foreach ($idCriterias as $idCriteria) {
+                                                                $criteria = $criterias
+                                                                    ->where('id', $idCriteria)
+                                                                    ->first();
+                                                                $totalValue += $criteria->weight; // Summing up the value into $totalValue
+                                                            }
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                            $tresholdC = $totalValue / $m;
+                                        @endphp
                                         @foreach ($matrixWeighted as $i => $matrixWeightedI)
                                             <tr>
                                                 <td>A{{ $i }}</td>
@@ -555,6 +599,7 @@
                                                     @if ($i != $j)
                                                         @php
                                                             $idCriterias = [];
+                                                            $value = 0;
                                                         @endphp
                                                         @foreach ($matrixWeightedI as $k => $matrixWeightedK)
                                                             @if ($matrixWeightedK['weight'] >= $matrixWeightedJ[$k]['weight'])
@@ -564,9 +609,6 @@
                                                             @endif
                                                         @endforeach
                                                         @if ($idCriterias)
-                                                            @php
-                                                                $value = 0;
-                                                            @endphp
                                                             @foreach ($idCriterias as $idCriteria)
                                                                 @php
                                                                     $criteria = $criterias
@@ -575,11 +617,7 @@
                                                                     $value += $criteria->weight;
                                                                 @endphp
                                                             @endforeach
-                                                            @if ($value == count($criterias))
-                                                                <td>1</td>
-                                                            @else
-                                                                <td>0</td>
-                                                            @endif
+                                                            <td>{{ $value >= $tresholdC ? 1 : 0 }}</td>
                                                         @else
                                                             <td>0</td>
                                                         @endif
@@ -620,6 +658,51 @@
                                         </tr>
                                     </thead>
                                     <tbody>
+                                        @php
+                                            $jumlahAlternatif = count($matrixWeighted);
+                                            $m = $jumlahAlternatif * ($jumlahAlternatif - 1);
+                                            $totalValueD = 0;
+                                            foreach ($matrixWeighted as $i => $matrixWeightedI) {
+                                                foreach ($matrixWeighted as $j => $matrixWeightedJ) {
+                                                    if ($i != $j) {
+                                                        $idCriterias = [];
+                                                        foreach ($matrixWeightedI as $k => $matrixWeightedK) {
+                                                            if (
+                                                                $matrixWeightedK['weight'] >=
+                                                                $matrixWeightedJ[$k]['weight']
+                                                            ) {
+                                                                $idCriterias[] = $k;
+                                                            }
+                                                        }
+                                                        $persatas = [];
+                                                        foreach ($idCriterias as $pi => $criteria) {
+                                                            if (!isset($persatas[$pi])) {
+                                                                $persatas[$pi] = 0;
+                                                            }
+                                                            $persatas[$pi] += abs(
+                                                                $matrixWeighted[$i][$criteria]['weight'] -
+                                                                    $matrixWeighted[$j][$criteria]['weight'],
+                                                            );
+                                                        }
+                                                        $maxAtas = !empty($persatas) ? max($persatas) : 0;
+                                                        $persbawah = [];
+                                                        foreach ($matrixWeightedI as $k => $matrixWeightedK) {
+                                                            if (!isset($persbawah[$k])) {
+                                                                $persbawah[$k] = 0;
+                                                            }
+                                                            $persbawah[$k] += abs(
+                                                                $matrixWeightedK['weight'] -
+                                                                    $matrixWeightedJ[$k]['weight'],
+                                                            );
+                                                        }
+                                                        $maxBawah = !empty($persbawah) ? max($persbawah) : 0;
+                                                        $bagi = round($maxAtas / $maxBawah, 4);
+                                                        $totalValueD += $bagi;
+                                                    }
+                                                }
+                                            }
+                                            $tresholdD = $totalValueD / $m;
+                                        @endphp
                                         @foreach ($matrixWeighted as $i => $matrixWeightedI)
                                             <tr>
                                                 <td>A{{ $i }}</td>
@@ -635,26 +718,38 @@
                                                                 @endphp
                                                             @endif
                                                         @endforeach
-                                                        @if ($idCriterias)
-                                                            @php
-                                                                $value = 0;
-                                                            @endphp
-                                                            @foreach ($idCriterias as $idCriteria)
-                                                                @php
-                                                                    $criteria = $criterias
-                                                                        ->where('id', $idCriteria)
-                                                                        ->first();
-                                                                    $value += $criteria->weight;
-                                                                @endphp
-                                                            @endforeach
-                                                            @if ($value == count($criterias))
-                                                                <td>1</td>
-                                                            @else
-                                                                <td>0</td>
-                                                            @endif
-                                                        @else
-                                                            <td>0</td>
-                                                        @endif
+                                                        {{-- {{ json_encode($idCriterias) }} --}}
+                                                        {{-- rumus --}}
+                                                        @php
+                                                            $persatas = [];
+                                                            foreach ($idCriterias as $pi => $criteria) {
+                                                                if (!isset($persatas[$pi])) {
+                                                                    $persatas[$pi] = 0;
+                                                                }
+                                                                $persatas[$pi] += abs(
+                                                                    $matrixWeighted[$i][$criteria]['weight'] -
+                                                                        $matrixWeighted[$j][$criteria]['weight'],
+                                                                );
+                                                            }
+                                                            $maxAtas = !empty($persatas) ? max($persatas) : 0;
+                                                        @endphp
+                                                        @php
+                                                            $persbawah = [];
+                                                            foreach ($matrixWeightedI as $k => $matrixWeightedK) {
+                                                                if (!isset($persbawah[$k])) {
+                                                                    $persbawah[$k] = 0;
+                                                                }
+                                                                $persbawah[$k] += abs(
+                                                                    $matrixWeightedK['weight'] -
+                                                                        $matrixWeightedJ[$k]['weight'],
+                                                                );
+                                                            }
+                                                            $maxBawah = !empty($persbawah) ? max($persbawah) : 0;
+                                                            $bagi = round($maxAtas / $maxBawah, 4);
+                                                        @endphp
+                                                        <td>
+                                                            {{ $bagi >= $tresholdD ? 1 : 0 }}
+                                                        </td>
                                                     @else
                                                         <td>-</td>
                                                     @endif
@@ -678,44 +773,88 @@
                                     <thead>
                                         <tr>
                                             <th>Alternatif</th>
-                                            <th>Nilai</th>
+                                            @foreach ($comparisonSubCriterias->groupBy('patient_id') as $patientId => $groupedPatients)
+                                                <?php
+                                                if ($groupedPatients->count() > 0) {
+                                                    $patient = $patientCriterias->where('id', $patientId)->first();
+                                                    if ($patient->patient->name == null) {
+                                                        continue;
+                                                    }
+                                                }
+                                                ?>
+                                                <th>{{ $patient->patient->name }}</th>
+                                            @endforeach
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @foreach ($matrixWeighted as $i => $matrixWeightedI)
                                             <tr>
                                                 <td>A{{ $i }}</td>
-                                                @php
-                                                    $value = 0;
-                                                @endphp
                                                 @foreach ($matrixWeighted as $j => $matrixWeightedJ)
                                                     @if ($i != $j)
                                                         @php
-                                                            $idCriterias = [];
+                                                            $idCriteriasC = [];
+                                                            $idCriteriasD = [];
+                                                            $value = 0;
                                                         @endphp
                                                         @foreach ($matrixWeightedI as $k => $matrixWeightedK)
                                                             @if ($matrixWeightedK['weight'] >= $matrixWeightedJ[$k]['weight'])
                                                                 @php
-                                                                    $idCriterias[] = $k;
+                                                                    $idCriteriasC[] = $k;
                                                                 @endphp
                                                             @endif
                                                         @endforeach
-                                                        @if ($idCriterias)
-                                                            @php
-                                                                $value = 0;
-                                                            @endphp
-                                                            @foreach ($idCriterias as $idCriteria)
+                                                        @foreach ($matrixWeightedI as $k => $matrixWeightedK)
+                                                            @if ($matrixWeightedK['weight'] < $matrixWeightedJ[$k]['weight'])
                                                                 @php
-                                                                    $criteria = $criterias
-                                                                        ->where('id', $idCriteria)
-                                                                        ->first();
-                                                                    $value += $criteria->weight;
+                                                                    $idCriteriasD[] = $k;
                                                                 @endphp
-                                                            @endforeach
-                                                        @endif
+                                                            @endif
+                                                        @endforeach
+                                                        {{-- {{ json_encode($idCriteriasD) }} --}}
+                                                        {{-- rumus --}}
+                                                        @foreach ($idCriteriasC as $idCriteria)
+                                                            @php
+                                                                $criteria = $criterias
+                                                                    ->where('id', $idCriteria)
+                                                                    ->first();
+                                                                $value += $criteria->weight;
+                                                            @endphp
+                                                        @endforeach
+                                                        @php
+                                                            $persatas = [];
+                                                            foreach ($idCriteriasD as $pi => $criteria) {
+                                                                if (!isset($persatas[$pi])) {
+                                                                    $persatas[$pi] = 0;
+                                                                }
+                                                                $persatas[$pi] += abs(
+                                                                    $matrixWeighted[$i][$criteria]['weight'] -
+                                                                        $matrixWeighted[$j][$criteria]['weight'],
+                                                                );
+                                                            }
+                                                            $maxAtas = !empty($persatas) ? max($persatas) : 0;
+                                                        @endphp
+                                                        @php
+                                                            $persbawah = [];
+                                                            foreach ($matrixWeightedI as $k => $matrixWeightedK) {
+                                                                if (!isset($persbawah[$k])) {
+                                                                    $persbawah[$k] = 0;
+                                                                }
+                                                                $persbawah[$k] += abs(
+                                                                    $matrixWeightedK['weight'] -
+                                                                        $matrixWeightedJ[$k]['weight'],
+                                                                );
+                                                            }
+                                                            $maxBawah = !empty($persbawah) ? max($persbawah) : 0;
+                                                            $bagi = round($maxAtas / $maxBawah, 4);
+                                                        @endphp
+                                                        <td>
+                                                            {{ ($bagi >= $tresholdD ? 1 : 0) * ($value >= $tresholdC ? 1 : 0) }}
+                                                        </td>
+                                                    @else
+                                                        <td>-</td>
                                                     @endif
                                                 @endforeach
-                                                <td>{{ $value }}</td>
                                             </tr>
                                         @endforeach
                                     </tbody>
@@ -724,7 +863,6 @@
                         </div>
                     </div>
 
-                    {{-- Penentuan Ranking --}}
                     <div class="card mb-4">
                         <div class="card-header">
                             <h4>Penentuan Ranking</h4>
@@ -735,57 +873,66 @@
                                     <thead>
                                         <tr>
                                             <th>Alternatif</th>
-                                            <th>Nilai</th>
-                                            <th>Ranking</th>
+                                            <td>Jumlah</td>
+                                            <td>Ranking</td>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @php
-                                            $rangking = [];
-                                        @endphp
-                                        @foreach ($matrixWeighted as $i => $matrixWeightedI)
-                                            @php
-                                                $value = 0;
-                                            @endphp
-                                            @foreach ($matrixWeighted as $j => $matrixWeightedJ)
-                                                @if ($i != $j)
-                                                    @php
-                                                        $idCriterias = [];
-                                                    @endphp
-                                                    @foreach ($matrixWeightedI as $k => $matrixWeightedK)
-                                                        @if ($matrixWeightedK['weight'] >= $matrixWeightedJ[$k]['weight'])
-                                                            @php
-                                                                $idCriterias[] = $k;
-                                                            @endphp
-                                                        @endif
-                                                    @endforeach
-                                                    @if ($idCriterias)
-                                                        @php
-                                                            $value = 0;
-                                                        @endphp
-                                                        @foreach ($idCriterias as $idCriteria)
-                                                            @php
-                                                                $criteria = $criterias
-                                                                    ->where('id', $idCriteria)
-                                                                    ->first();
-                                                                $value += $criteria->weight;
-                                                            @endphp
-                                                        @endforeach
-                                                        @php
-                                                            $rangking[$i] = $value;
-                                                        @endphp
-                                                    @endif
-                                                @endif
-                                            @endforeach
-                                        @endforeach
-
-
-                                        @php
-                                            arsort($rangking);
+                                            $ranking = [];
+                                            foreach ($matrixWeighted as $i => $matrixWeightedI) {
+                                                $totalSum = 0;
+                                                foreach ($matrixWeighted as $j => $matrixWeightedJ) {
+                                                    if ($i != $j) {
+                                                        $idCriteriasC = [];
+                                                        $idCriteriasD = [];
+                                                        $value = 0;
+                                                        foreach ($matrixWeightedI as $k => $matrixWeightedK) {
+                                                            if (
+                                                                $matrixWeightedK['weight'] >=
+                                                                $matrixWeightedJ[$k]['weight']
+                                                            ) {
+                                                                $idCriteriasC[] = $k;
+                                                            } elseif (
+                                                                $matrixWeightedK['weight'] <
+                                                                $matrixWeightedJ[$k]['weight']
+                                                            ) {
+                                                                $idCriteriasD[] = $k;
+                                                            }
+                                                        }
+                                                        foreach ($idCriteriasC as $idCriteria) {
+                                                            $criteria = $criterias->where('id', $idCriteria)->first();
+                                                            $value += $criteria->weight;
+                                                        }
+                                                        $persatas = [];
+                                                        foreach ($idCriteriasD as $pi => $criteria) {
+                                                            $persatas[$pi] = isset($persatas[$pi]) ? $persatas[$pi] : 0;
+                                                            $persatas[$pi] += abs(
+                                                                $matrixWeighted[$i][$criteria]['weight'] -
+                                                                    $matrixWeighted[$j][$criteria]['weight'],
+                                                            );
+                                                        }
+                                                        $maxAtas = !empty($persatas) ? max($persatas) : 0;
+                                                        $persbawah = [];
+                                                        foreach ($matrixWeightedI as $k => $matrixWeightedK) {
+                                                            $persbawah[$k] = isset($persbawah[$k]) ? $persbawah[$k] : 0;
+                                                            $persbawah[$k] += abs(
+                                                                $matrixWeightedK['weight'] -
+                                                                    $matrixWeightedJ[$k]['weight'],
+                                                            );
+                                                        }
+                                                        $maxBawah = !empty($persbawah) ? max($persbawah) : 0;
+                                                        $bagi = round($maxAtas / $maxBawah, 4);
+                                                        $totalSum += $value - $bagi;
+                                                    }
+                                                }
+                                                $ranking[$i] = $totalSum;
+                                            }
+                                            arsort($ranking);
                                             $no = 1;
                                         @endphp
 
-                                        @foreach ($rangking as $key => $value)
+                                        @foreach ($ranking as $key => $value)
                                             <tr>
                                                 <td>A{{ $key }}</td>
                                                 <td>{{ $value }}</td>

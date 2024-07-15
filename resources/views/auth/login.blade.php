@@ -4,8 +4,8 @@
 
 @section('content')
     <div class="auth-form-light text-left p-5">
-        <div class="brand-logo">
-            <img src="{{ asset('assets/images/logo_polinema.png') }}" alt="logo" width="50">
+        <div class="brand-logo" style="text-align: center;">
+            <img src="{{ asset('assets/images/logorsnu.png') }}" alt="logo" width="50" class="align-item-center" style="margin: ">
         </div>
         <h4>Sistem Pendukung Keputusan Deteksi Dini Penyakit Stroke</h4>
         <h6 class="font-weight-light">Sign in to continue.</h6>

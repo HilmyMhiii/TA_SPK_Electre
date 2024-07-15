@@ -1,8 +1,11 @@
 <nav class="navbar default-layout-navbar col-lg-12 col-12 p-0 fixed-top d-flex flex-row">
     <div class="text-center navbar-brand-wrapper d-flex align-items-center justify-content-center">
         <a class="navbar-brand brand-logo" href="/">
-            <img src="{{ asset('assets/images/logo_spk_electre.png') }}" alt="logo" class="img-fluid">
+            <img src="{{ asset('assets/images/rsnuu.png') }}" alt="logo" class="img-fluid" style="width: 1000px; ">
+            {{-- <img src="{{ asset('assets/images/logo_spk_electre.png') }}" alt="logo" class="img-fluid"> --}}
         </a>
+        <
+
         <button class="navbar-toggler navbar-toggler align-self-center" type="button" data-toggle="minimize">
             <span class="icon-menu"></span>
         </button>
