@@ -1,7 +1,7 @@
 <nav class="sidebar sidebar-offcanvas" id="sidebar">
     <ul class="nav">
         <li class="nav-item navbar-brand-mini-wrapper mt-3">
-            <a class="nav-link navbar-brand" href="/"><img src="{{ asset('assets/images/logo_polinema.png') }}"
+            <a class="nav-link navbar-brand" href="/"><img src="{{ asset('assets/images/logorsnuuu.png') }}"
                     alt="logo" width="30" /></a>
         </li>
         <li class="nav-item nav-profile">
